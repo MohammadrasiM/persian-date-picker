@@ -33,6 +33,7 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 import DatePicker, { DatePicker as Named, DatePickerModal } from '@mohammad-masoudi/persian-datepicker';
 const require = createRequire(import.meta.url);
+assert.ok(!require('@mohammad-masoudi/persian-datepicker/package.json').dependencies?.['@headlessui/react']);
 assert.equal(DatePicker, Named);
 for (const Modal of [DatePickerModal, require('@mohammad-masoudi/persian-datepicker').DatePickerModal]) {
   assert.equal(typeof Modal, 'function');

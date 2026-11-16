@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { StrictMode, useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -158,4 +158,129 @@ describe("DatePickerModal", () => {
     expect(screen.getByRole("button", { name: "روز 10" }).getAttribute("aria-pressed"))
       .toBe("true");
   });
+
+  it("locks scrolling and background interaction, then restores the original page state", async () => {
+    const user = userEvent.setup();
+    const bodyStyle = document.body.style.cssText;
+    const htmlStyle = document.documentElement.style.cssText;
+    document.body.style.setProperty("overflow", "scroll", "important");
+    document.body.style.paddingRight = "7px";
+    document.documentElement.style.overflow = "clip";
+    const view = render(<Harness options={props()} />);
+    view.container.setAttribute("aria-hidden", "false");
+    try {
+      await user.click(screen.getByRole("button", { name: "باز کردن تقویم" }));
+      await screen.findByRole("dialog");
+      expect(document.body.style.overflow).toBe("hidden");
+      expect(document.documentElement.style.overflow).toBe("hidden");
+      expect(view.container.hasAttribute("inert")).toBe(true);
+      expect(view.container.getAttribute("aria-hidden")).toBe("true");
+      await user.click(screen.getByRole("button", { name: "بستن" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(view.container.hasAttribute("inert")).toBe(false);
+      expect(view.container.getAttribute("aria-hidden")).toBe("false");
+      expect(document.body.style.overflow).toBe("scroll");
+      expect(document.body.style.getPropertyPriority("overflow")).toBe("important");
+      expect(document.body.style.paddingRight).toBe("7px");
+      expect(document.documentElement.style.overflow).toBe("clip");
+    } finally {
+      view.unmount();
+      document.body.style.cssText = bodyStyle;
+      document.documentElement.style.cssText = htmlStyle;
+    }
+  });
+
+  it("blocks newly added background content and cleans up when unmounted while open", async () => {
+    const user = userEvent.setup();
+    const overflow = document.body.style.overflow;
+    const view = render(<Harness options={props()} />);
+    const trigger = screen.getByRole("button", { name: "باز کردن تقویم" });
+    await user.click(trigger);
+    await screen.findByRole("dialog");
+    const background = document.createElement("button");
+    background.setAttribute("aria-hidden", "false");
+    document.body.append(background);
+    try {
+      await waitFor(() => expect(background.hasAttribute("inert")).toBe(true));
+      view.unmount();
+      expect(document.body.style.overflow).toBe(overflow);
+      expect(view.container.hasAttribute("inert")).toBe(false);
+      expect(background.hasAttribute("inert")).toBe(false);
+      expect(background.getAttribute("aria-hidden")).toBe("false");
+      background.focus();
+      expect(document.activeElement).toBe(background);
+    } finally {
+      view.unmount();
+      background.remove();
+    }
+  });
+
+  it("does not dismiss a pointer gesture that starts inside the calendar", async () => {
+    const user = userEvent.setup();
+    const onHide = vi.fn();
+    render(<Harness options={props()} onHide={onHide} />);
+    await user.click(screen.getByRole("button", { name: "باز کردن تقویم" }));
+    const day = await screen.findByRole("button", { name: "روز 10" });
+    await user.pointer([
+      { target: day, keys: "[MouseLeft>]" },
+      { target: document.body, keys: "[/MouseLeft]" },
+    ]);
+    expect(onHide).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeTruthy();
+  });
+
+  it("redirects programmatic focus back into the modal", async () => {
+    const user = userEvent.setup();
+    render(<Harness options={props()} />);
+    const trigger = screen.getByRole("button", { name: "باز کردن تقویم" });
+    await user.click(trigger);
+    await screen.findByRole("dialog");
+    trigger.focus();
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "بستن" }));
+  });
+
+  it("keeps the top modal active when another modal closes first", async () => {
+    const user = userEvent.setup();
+    const firstHide = vi.fn();
+    const secondHide = vi.fn();
+    const overflow = document.body.style.overflow;
+    const stack = (first: boolean, second: boolean) => (
+      <>
+        <DatePickerModal {...props()} show={first} onHide={firstHide} title="تقویم اول" />
+        <DatePickerModal {...props()} show={second} onHide={secondHide} title="تقویم دوم" />
+      </>
+    );
+    const view = render(stack(true, false));
+    const first = await screen.findByRole("dialog", { name: "تقویم اول" });
+    view.rerender(stack(true, true));
+    const second = await screen.findByRole("dialog", { name: "تقویم دوم" });
+    expect(first.hasAttribute("inert")).toBe(true);
+    view.rerender(stack(false, true));
+    await waitFor(() => expect(first.isConnected).toBe(false));
+    expect(second.hasAttribute("inert")).toBe(false);
+    expect(view.container.hasAttribute("inert")).toBe(true);
+    expect(document.body.style.overflow).toBe("hidden");
+    await user.keyboard("{Escape}");
+    expect(secondHide).toHaveBeenCalledOnce();
+    expect(firstHide).not.toHaveBeenCalled();
+    view.rerender(stack(false, false));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(view.container.hasAttribute("inert")).toBe(false);
+    expect(document.body.style.overflow).toBe(overflow);
+  });
+
+  it("cleans up correctly with React StrictMode", async () => {
+    const user = userEvent.setup();
+    const afterLeave = vi.fn();
+    const overflow = document.body.style.overflow;
+    render(<StrictMode><Harness options={props({ afterLeave })} /></StrictMode>);
+    const trigger = screen.getByRole("button", { name: "باز کردن تقویم" });
+    await user.click(trigger);
+    await user.click(await screen.findByRole("button", { name: "بستن" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(afterLeave).toHaveBeenCalledOnce();
+    expect(document.body.style.overflow).toBe(overflow);
+    expect(document.activeElement).toBe(trigger);
+  });
+
 });

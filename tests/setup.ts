@@ -1,8 +1,6 @@
 import { afterEach, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 afterEach(() => cleanup());
-// jsdom has no CSS animations; transitions complete without animation objects.
-if (!Element.prototype.getAnimations) Element.prototype.getAnimations = () => [];
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn((query: string) => ({

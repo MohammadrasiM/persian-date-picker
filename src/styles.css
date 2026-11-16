@@ -39,4 +39,26 @@
   z-index: 1000;
   background: transparent;
 }
+.mpd-datepicker.mpd-modal[data-closing="true"] {
+  pointer-events: none;
+}
+.mpd-datepicker .mpd-modal-backdrop {
+  opacity: var(--mpd-modal-progress, 0);
+  touch-action: none;
+}
+.mpd-datepicker .mpd-modal-panel {
+  transform: translateY(calc((1 - var(--mpd-modal-progress, 0)) * 100%));
+}
+@media (min-width: 768px) {
+  .mpd-datepicker .mpd-modal-panel {
+    transform: translateY(calc((1 - var(--mpd-modal-progress, 0)) * 1rem))
+      scale(calc(0.95 + var(--mpd-modal-progress, 0) * 0.05));
+    opacity: var(--mpd-modal-progress, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mpd-datepicker .mpd-modal-panel {
+    transform: none;
+  }
+}
 @tailwind utilities;

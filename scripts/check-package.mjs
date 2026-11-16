@@ -10,16 +10,20 @@ const locale = moment.locale();
 const esm = await import("@mohammad-masoudi/persian-datepicker");
 const require = createRequire(import.meta.url);
 const cjs = require("@mohammad-masoudi/persian-datepicker");
+const metadata = require("@mohammad-masoudi/persian-datepicker/package.json");
+assert.ok(!metadata.dependencies?.["@headlessui/react"], "The package must not depend on Headless UI");
 assert.equal(moment.locale(), locale, "Import must preserve the host's locale");
 for (const entry of [esm, cjs]) {
   assert.equal(entry.default, entry.DatePicker);
   assert.equal(typeof entry.DatePickerModal, "function");
-  assert.equal(
-    renderToString(
-      createElement(entry.DatePickerModal, { show: false, onHide() {}, setSelectedDate() {} }),
-    ),
-    "",
-  );
+  for (const show of [false, true]) {
+    assert.equal(
+      renderToString(
+        createElement(entry.DatePickerModal, { show, onHide() {}, setSelectedDate() {} }),
+      ),
+      "",
+    );
+  }
   const html = renderToString(
     createElement(entry.DatePicker, {
       selectedDate: { year: 1403, month: 1, day: 1 },
