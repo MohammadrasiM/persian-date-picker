@@ -13,7 +13,13 @@ function Example() {
       <button id="outside-button" onClick={() => setOpen(!open)}>
         Toggle picker
       </button>
-      <button id="modal-button" type="button" onClick={() => setModalOpen(true)}>
+      <button
+        id="modal-button"
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={modalOpen}
+        onClick={() => setModalOpen(true)}
+      >
         Open modal datepicker
       </button>
       <DatePickerModal

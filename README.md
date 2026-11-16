@@ -104,7 +104,12 @@ export default function ModalExample() {
 
   return (
     <div dir="rtl">
-      <button type="button" onClick={() => setIsOpen(true)}>
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen(true)}
+      >
         {selectedDate
           ? `${selectedDate.year}/${selectedDate.month}/${selectedDate.day}`
           : "انتخاب تاریخ"}
