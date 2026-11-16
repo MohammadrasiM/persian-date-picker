@@ -1,0 +1,78 @@
+{
+  "name": "@mohammad-masoudi/persian-datepicker",
+  "version": "0.1.2",
+  "description": "An animated RTL Persian (Jalali) date picker for React, with standalone CSS.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    },
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node scripts/build.mjs",
+    "test": "vitest run",
+    "check:package": "node scripts/check-package.mjs",
+    "check:consumer": "npm run build && node scripts/check-consumer.mjs",
+    "dev": "vite --host 127.0.0.1",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@headlessui/react": "^2.2.10",
+    "@mohammad-masoudi/persian-datepicker": "^0.1.0",
+    "framer-motion": "^12.23.24",
+    "moment-jalaali": "^0.10.4"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.12",
+    "@types/moment-jalaali": "^0.7.6",
+    "@types/node": "^22.14.1",
+    "@types/react": "^19.1.1",
+    "@types/react-dom": "^19.1.2",
+    "jsdom": "^29.1.1",
+    "postcss": "^8.5.33",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tailwindcss": "3.4.19",
+    "typescript": "5.8.3",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  },
+  "keywords": [
+    "react",
+    "datepicker",
+    "persian",
+    "jalali",
+    "jalaali",
+    "rtl"
+  ]
+}
