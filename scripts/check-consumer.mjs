@@ -34,6 +34,8 @@ import { renderToString } from 'react-dom/server';
 import DatePicker, { DatePicker as Named, DatePickerModal } from '@mohammad-masoudi/persian-datepicker';
 const require = createRequire(import.meta.url);
 assert.ok(!require('@mohammad-masoudi/persian-datepicker/package.json').dependencies?.['@headlessui/react']);
+assert.ok(!require('@mohammad-masoudi/persian-datepicker/package.json').dependencies?.['framer-motion']);
+assert.ok(!require('@mohammad-masoudi/persian-datepicker/package.json').dependencies?.['@mohammad-masoudi/persian-datepicker']);
 assert.equal(DatePicker, Named);
 for (const Modal of [DatePickerModal, require('@mohammad-masoudi/persian-datepicker').DatePickerModal]) {
   assert.equal(typeof Modal, 'function');
@@ -46,12 +48,24 @@ for (const Picker of [DatePicker, require('@mohammad-masoudi/persian-datepicker'
 assert.ok(require.resolve('@mohammad-masoudi/persian-datepicker/styles.css').endsWith('styles.css'));
 console.log('Packed consumer passed on React ' + React.version);
 `;
-const types = `import DatePicker, { DatePicker as Named, DatePickerModal, type DatePickerProps, type DatePickerSelectedDate, type DatePickerModalProps } from '@mohammad-masoudi/persian-datepicker';
+const types = `import DatePicker, { DatePicker as Named, DatePickerModal, type DatePickerProps, type DatePickerSelectedDate, type DatePickerModalProps, type DatePickerLabels, type DatePickerButtonProps, type DatePickerContainerProps } from '@mohammad-masoudi/persian-datepicker';
 const value: DatePickerSelectedDate = { year: 1403, month: 1, day: 1 };
 const props: DatePickerProps = { selectedDate: value, setSelectedDate(date) { console.log(date); }, onSubmit() {} };
 const Component: typeof DatePicker = Named;
 const modalProps: DatePickerModalProps = { show: true, onHide() {}, selectedDate: value, setSelectedDate(date) { console.log(date); }, title: 'انتخاب تاریخ', afterLeave() {}, options: { containerClass: 'calendar-theme', parentClass: 'calendar-position' } };
 const ModalComponent: typeof DatePickerModal = DatePickerModal;
+const labels: DatePickerLabels = { submit: 'Confirm', close: 'Close', day: (day) => 'Day ' + day };
+const button: DatePickerButtonProps = { className: 'confirm', title: 'Save', style: { borderRadius: 24 }, 'data-testid': 'confirm', 'aria-describedby': 'hint' };
+const container: DatePickerContainerProps = { id: 'booking', 'data-booking': true, style: { maxWidth: 360 } };
+const customized: DatePickerProps = { ...props, primaryColor: '#004f98', buttonColor: '#00695c', buttonTextColor: '#fff', labels, submitButtonProps: button, containerProps: container, disabled: true };
+const customizedModal: DatePickerModalProps = { ...modalProps, ...customized, closeButtonProps: button, options: { backdropClass: 'backdrop' } };
+// @ts-expect-error Internal click handling cannot be replaced.
+const invalidButton: DatePickerButtonProps = { onClick() {} };
+// @ts-expect-error Disable through the picker rather than a button prop bag.
+const invalidDisabled: DatePickerButtonProps = { disabled: false };
+// @ts-expect-error The calendar keeps its RTL direction.
+const invalidContainer: DatePickerContainerProps = { dir: 'ltr' };
+void customized; void customizedModal; void invalidButton; void invalidDisabled; void invalidContainer;
 void props; void Component; void modalProps; void ModalComponent;
 `;
 for (const major of [18, 19]) {

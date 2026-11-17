@@ -12,6 +12,8 @@ const require = createRequire(import.meta.url);
 const cjs = require("@mohammad-masoudi/persian-datepicker");
 const metadata = require("@mohammad-masoudi/persian-datepicker/package.json");
 assert.ok(!metadata.dependencies?.["@headlessui/react"], "The package must not depend on Headless UI");
+assert.ok(!metadata.dependencies?.["framer-motion"], "The package must not depend on Framer Motion");
+assert.ok(!metadata.dependencies?.[metadata.name], "The package must not depend on itself");
 assert.equal(moment.locale(), locale, "Import must preserve the host's locale");
 for (const entry of [esm, cjs]) {
   assert.equal(entry.default, entry.DatePicker);
@@ -34,6 +36,23 @@ for (const entry of [esm, cjs]) {
     }),
   );
   assert.ok(html.includes("فروردین") && html.includes('dir="rtl"'));
+  const customized = renderToString(createElement(entry.DatePicker, {
+    selectedDate: { year: 1403, month: 1, day: 1 },
+    setSelectedDate() {},
+    onSubmit() {},
+    primaryColor: "#04a",
+    buttonColor: "#00695c",
+    buttonTextColor: "#fff",
+    labels: { submit: "Confirm date" },
+    submitButtonProps: { className: "consumer-submit", "data-booking": "confirm" },
+    containerProps: { id: "consumer-calendar" },
+    disabled: true,
+  }));
+  for (const value of [
+    "--mpd-primary:0 68 170", "--mpd-button-background:#00695c",
+    "--mpd-button-text:#fff", "Confirm date", "consumer-submit",
+    'data-booking="confirm"', 'id="consumer-calendar"', 'disabled=""',
+  ]) assert.ok(customized.includes(value), `Missing customization in server output: ${value}`);
 }
 for (const path of [
   "../dist/esm/index.js",
@@ -45,10 +64,15 @@ for (const path of [
 }
 const css = readFileSync(require.resolve("@mohammad-masoudi/persian-datepicker/styles.css"), "utf8");
 postcss.parse(css).walkRules((rule) => {
+  if (rule.parent.type === "atrule" && /keyframes$/i.test(rule.parent.name)) {
+    assert.match(rule.parent.params, /^mpd-/);
+    for (const selector of rule.selectors) assert.match(selector, /^(from|to|\d+(\.\d+)?%)$/);
+    return;
+  }
   for (const selector of rule.selectors)
     assert.ok(selector.startsWith(".mpd-datepicker"), `Unscoped selector: ${selector}`);
 });
-for (const token of ["primary", "text", "border", "background", "error"])
+for (const token of ["primary", "text", "border", "background", "error", "button-background", "button-text"])
   assert.ok(css.includes(`--mpd-${token}`));
 console.log(
   "Inline and modal exports, ESM, CommonJS, server rendering, client directives, CSS exports, scoping, and theme variables passed.",

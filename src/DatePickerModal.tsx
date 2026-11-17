@@ -3,6 +3,7 @@
 import DatePicker from "./DatePicker.js";
 import ModalBottomSheet from "./ModalBottomSheet.js";
 import type { DatePickerModalProps } from "./types.js";
+import { defaultLabels, themeStyle } from "./customization.js";
 
 export default function DatePickerModal({
   show,
@@ -11,6 +12,7 @@ export default function DatePickerModal({
   afterLeave,
   title = "انتخاب تاریخ",
   options,
+  closeButtonProps,
   ...datePickerProps
 }: DatePickerModalProps) {
   return (
@@ -20,6 +22,9 @@ export default function DatePickerModal({
       afterLeave={afterLeave}
       title={title}
       options={options}
+      style={themeStyle(datePickerProps)}
+      closeLabel={datePickerProps.labels?.close ?? defaultLabels.close}
+      closeButtonProps={closeButtonProps}
     >
       <DatePicker
         {...datePickerProps}

@@ -42,6 +42,7 @@ run("node_modules/tailwindcss/lib/cli.js", [
 const cssPath = path.join(dist, "styles.css");
 const css = postcss.parse(readFileSync(cssPath, "utf8"));
 css.walkRules((rule) => {
+  if (rule.parent.type === "atrule" && /keyframes$/i.test(rule.parent.name)) return;
   rule.selectors = rule.selectors.map((selector) =>
     selector.startsWith(".mpd-datepicker") ? selector : `.mpd-datepicker ${selector}`,
   );

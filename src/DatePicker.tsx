@@ -2,11 +2,12 @@
 
 import { date as jalaliDate, moment, PERSIAN_MONTH_NAMES } from "./date.js";
 import { ArrowLeftIcon, ArrowRightIcon, CaretDownIcon } from "./Icons.js";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import AnimatedSwap from "./AnimatedSwap.js";
 import { useEffect, useRef, useState } from "react";
 import type { DatePickerProps } from "./types.js";
 import DayPicker from "./DayPicker.js";
 import DaysOfTheWeek from "./DaysOfTheWeek.js";
+import { defaultLabels, themeStyle } from "./customization.js";
 
 export default function DatePicker({
   selectedDate,
@@ -17,7 +18,15 @@ export default function DatePicker({
   pastYears = 100,
   nextYears = 5,
   onSubmit,
+  primaryColor,
+  buttonColor,
+  buttonTextColor,
+  submitButtonProps,
+  containerProps,
+  labels,
+  disabled = false,
 }: DatePickerProps) {
+  const text = { ...defaultLabels, ...labels };
   const currentYear = jalaliDate().jYear();
   const firstYear = minYear ?? currentYear - Math.max(0, Math.floor(pastYears));
   const lastYear = maxYear ?? currentYear + Math.max(0, Math.floor(nextYears));
@@ -37,7 +46,6 @@ export default function DatePicker({
   const [selectedDay, setSelectedDay] = useState(chosenDate);
   const [view, setView] = useState<"days" | "months" | "years">("days");
   const [direction, setDirection] = useState(0);
-  const reduceMotion = useReducedMotion();
   const yearGridRef = useRef<HTMLDivElement>(null);
   const monthGridRef = useRef<HTMLDivElement>(null);
   const monthButtonRef = useRef<HTMLButtonElement>(null);
@@ -66,6 +74,7 @@ export default function DatePicker({
   const selectDay = (value: string) => {
     const selected = jalaliDate(value, "jYYYY/jMM/jD");
     if (
+      disabled ||
       !hasDates ||
       !selected.isValid() ||
       selected.isBefore(minimum, "day") ||
@@ -77,6 +86,8 @@ export default function DatePicker({
   const submitDate = () => {
     const selected = jalaliDate(selectedDay, "jYYYY/jMM/jD");
     if (
+      disabled ||
+      view !== "days" ||
       !hasDates ||
       !selected.isValid() ||
       selected.isBefore(minimum, "day") ||
@@ -93,6 +104,7 @@ export default function DatePicker({
   const changeMonth = (offset: number) => {
     const next = date.clone().startOf("jMonth").add(offset, "jMonth");
     if (
+      disabled ||
       view !== "days" ||
       !hasDates ||
       next.clone().endOf("jMonth").isBefore(minimum, "day") ||
@@ -103,6 +115,7 @@ export default function DatePicker({
     setChosenDate(next.format("jYYYY/jMM/jDD"));
   };
   const showDate = (next: moment.Moment) => {
+    if (disabled) return;
     setDirection(next.isAfter(date, "day") ? -1 : 1);
     setChosenDate(moment.max(minimum, moment.min(maximum, next)).format("jYYYY/jMM/jDD"));
     setView("days");
@@ -112,13 +125,23 @@ export default function DatePicker({
     "flex min-h-12 items-center justify-center rounded-lg border border-primary-border px-2 text-sm text-dashboard-text transition-colors hover:bg-primary-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500 disabled:cursor-not-allowed disabled:opacity-40 aria-pressed:border-primary-500 aria-pressed:bg-primary-500 aria-pressed:text-white";
 
   return (
-    <div className="mpd-datepicker" dir="rtl">
+    <div
+      {...containerProps}
+      className={`mpd-datepicker ${containerProps?.className ?? ""}`}
+      style={{
+        ...themeStyle({ primaryColor, buttonColor, buttonTextColor }),
+        ...containerProps?.style,
+      }}
+      dir="rtl"
+    >
       <div className="flex w-full flex-col gap-3 py-3">
         <div className="flex items-center justify-between gap-2">
           <button
             type="button"
-            aria-label="ماه قبل"
+            aria-label={text.previousMonth}
+            title={text.previousMonth}
             disabled={
+              disabled ||
               view !== "days" ||
               !hasDates ||
               date
@@ -135,38 +158,46 @@ export default function DatePicker({
             <button
               ref={monthButtonRef}
               type="button"
-              aria-label="ماه"
+              aria-label={text.month}
+              title={text.month}
               aria-expanded={view === "months"}
-              disabled={!hasDates}
+              disabled={disabled || !hasDates}
               className="flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-lg px-2 text-sm text-dashboard-text transition-colors hover:bg-primary-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500"
-              onClick={() => setView(view === "months" ? "days" : "months")}
+              onClick={() => {
+                if (!disabled) setView(view === "months" ? "days" : "months");
+              }}
             >
               {PERSIAN_MONTH_NAMES[month]}
               <CaretDownIcon
                 aria-hidden="true"
-                className={`size-3.5 shrink-0 transition-transform ${view === "months" ? "rotate-180" : ""}`}
+                className={`size-3.5 shrink-0 transition-transform motion-reduce:transition-none ${view === "months" ? "rotate-180" : ""}`}
               />
             </button>
             <button
               ref={yearButtonRef}
               type="button"
-              aria-label="سال"
+              aria-label={text.year}
+              title={text.year}
               aria-expanded={view === "years"}
-              disabled={!hasDates}
+              disabled={disabled || !hasDates}
               className="flex min-h-11 min-w-0 items-center justify-center gap-1 rounded-lg px-2 text-sm text-dashboard-text transition-colors hover:bg-primary-500/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-500"
-              onClick={() => setView(view === "years" ? "days" : "years")}
+              onClick={() => {
+                if (!disabled) setView(view === "years" ? "days" : "years");
+              }}
             >
               {year}
               <CaretDownIcon
                 aria-hidden="true"
-                className={`size-3.5 shrink-0 transition-transform ${view === "years" ? "rotate-180" : ""}`}
+                className={`size-3.5 shrink-0 transition-transform motion-reduce:transition-none ${view === "years" ? "rotate-180" : ""}`}
               />
             </button>
           </div>
           <button
             type="button"
-            aria-label="ماه بعد"
+            aria-label={text.nextMonth}
+            title={text.nextMonth}
             disabled={
+              disabled ||
               view !== "days" ||
               !hasDates ||
               date.clone().endOf("jMonth").isSameOrAfter(maximum, "day")
@@ -178,174 +209,152 @@ export default function DatePicker({
           </button>
         </div>
         <div className="relative grid min-h-80 overflow-hidden">
-          <AnimatePresence initial={false}>
-            <motion.div
-              key={view}
-              initial={{
-                y: reduceMotion || view === "days" ? 0 : -24,
-                opacity: 0,
-                clipPath: reduceMotion || view === "days" ? "inset(0 0 0% 0)" : "inset(0 0 100% 0)",
-              }}
-              animate={{ y: 0, opacity: 1, clipPath: "inset(0 0 0% 0)" }}
-              exit={{
-                y: reduceMotion || view === "days" ? 0 : -24,
-                opacity: 0,
-                clipPath: reduceMotion || view === "days" ? "inset(0 0 0% 0)" : "inset(0 0 100% 0)",
-                pointerEvents: "none",
-              }}
-              transition={{ duration: reduceMotion ? 0 : 0.22, ease: "easeOut" }}
-              className="col-start-1 row-start-1 min-h-0 min-w-0"
-            >
-              {!hasDates ? (
-                <p role="alert" className="text-sm text-dashboard-danger">
-                  تاریخی در بازه انتخابی وجود ندارد.
-                </p>
-              ) : view === "months" ? (
-                <div
-                  ref={monthGridRef}
-                  aria-label="انتخاب ماه"
-                  className="relative grid h-80 grid-cols-4 content-start gap-2 overflow-y-auto p-1"
-                >
-                  {PERSIAN_MONTH_NAMES.map((name, index) => {
-                    const next = date.clone().startOf("jMonth").jMonth(index);
+          <AnimatedSwap
+            transitionKey={view}
+            animation="view"
+            view={view}
+            className="col-start-1 row-start-1 min-h-0 min-w-0"
+          >
+            {(active) => !hasDates ? (
+              <p role="alert" className="text-sm text-dashboard-danger">
+                {text.emptyRange}
+              </p>
+            ) : view === "months" ? (
+              <div
+                ref={active ? monthGridRef : undefined}
+                aria-label={text.chooseMonth}
+                className="relative grid h-80 grid-cols-4 content-start gap-2 overflow-y-auto p-1"
+              >
+                {PERSIAN_MONTH_NAMES.map((name, index) => {
+                  const next = date.clone().startOf("jMonth").jMonth(index);
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      aria-pressed={month === index}
+                      disabled={
+                        disabled ||
+                        next.clone().endOf("jMonth").isBefore(minimum, "day") ||
+                        next.isAfter(maximum, "day")
+                      }
+                      className={choiceClass}
+                      onClick={() => showDate(next)}
+                    >
+                      {name}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : view === "years" ? (
+              <div
+                ref={active ? yearGridRef : undefined}
+                aria-label={text.chooseYear}
+                className="relative grid h-80 grid-cols-4 content-start gap-2 overflow-y-auto overscroll-contain p-1"
+              >
+                {Array.from(
+                  { length: Math.max(0, lastYear - minimum.jYear() + 1) },
+                  (_, index) => {
+                    const value = minimum.jYear() + index;
                     return (
                       <button
-                        key={name}
+                        key={value}
                         type="button"
-                        aria-pressed={month === index}
-                        disabled={
-                          next.clone().endOf("jMonth").isBefore(minimum, "day") ||
-                          next.isAfter(maximum, "day")
-                        }
+                        aria-pressed={year === value}
+                        disabled={disabled}
                         className={choiceClass}
-                        onClick={() => showDate(next)}
+                        onClick={() => showDate(date.clone().startOf("jMonth").jYear(value))}
                       >
-                        {name}
+                        {value}
                       </button>
                     );
-                  })}
+                  },
+                )}
+              </div>
+            ) : (
+              <div
+                className="touch-pan-y select-none overflow-x-hidden"
+                onPointerDown={(event) => {
+                  if (disabled || !event.isPrimary || event.button !== 0) return;
+                  suppressDateClickRef.current = false;
+                  swipeRef.current = {
+                    pointerId: event.pointerId,
+                    x: event.clientX,
+                    y: event.clientY,
+                    horizontal: false,
+                    moved: false,
+                  };
+                }}
+                onPointerMove={(event) => {
+                  const swipe = swipeRef.current;
+                  if (!swipe || swipe.pointerId !== event.pointerId) return;
+                  const x = Math.abs(event.clientX - swipe.x);
+                  const y = Math.abs(event.clientY - swipe.y);
+                  if (x > 8 || y > 8) swipe.moved = true;
+                  if (!swipe.horizontal && x > 8 && x > y * 1.2) {
+                    swipe.horizontal = true;
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                  }
+                }}
+                onPointerUp={(event) => {
+                  const swipe = swipeRef.current;
+                  if (!swipe || swipe.pointerId !== event.pointerId) return;
+                  swipeRef.current = null;
+                  suppressDateClickRef.current = swipe.moved;
+                  const x = event.clientX - swipe.x;
+                  const y = event.clientY - swipe.y;
+                  if (swipe.horizontal && Math.abs(x) >= 48 && Math.abs(x) > Math.abs(y) * 1.2) {
+                    changeMonth(x > 0 ? 1 : -1);
+                  }
+                }}
+                onPointerCancel={() => {
+                  swipeRef.current = null;
+                  suppressDateClickRef.current = true;
+                }}
+                onLostPointerCapture={() => {
+                  swipeRef.current = null;
+                }}
+                onClickCapture={(event) => {
+                  if (suppressDateClickRef.current && event.detail > 0) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }
+                }}
+              >
+                <DaysOfTheWeek />
+                <div className="relative mt-2 grid overflow-hidden">
+                  <AnimatedSwap
+                    transitionKey={`${year}-${month}`}
+                    animation="month"
+                    direction={direction}
+                    className="col-start-1 row-start-1"
+                  >
+                    {() => (
+                      <DayPicker
+                        year={year}
+                        month={month}
+                        selectedDate={selectedDay}
+                        minimum={minimum}
+                        maximum={maximum}
+                        disabled={disabled}
+                        dayLabel={text.day}
+                        onSelect={selectDay}
+                      />
+                    )}
+                  </AnimatedSwap>
                 </div>
-              ) : view === "years" ? (
-                <div
-                  ref={yearGridRef}
-                  aria-label="انتخاب سال"
-                  className="relative grid h-80 grid-cols-4 content-start gap-2 overflow-y-auto overscroll-contain p-1"
-                >
-                  {Array.from(
-                    { length: Math.max(0, lastYear - minimum.jYear() + 1) },
-                    (_, index) => {
-                      const value = minimum.jYear() + index;
-                      return (
-                        <button
-                          key={value}
-                          type="button"
-                          aria-pressed={year === value}
-                          className={choiceClass}
-                          onClick={() => showDate(date.clone().startOf("jMonth").jYear(value))}
-                        >
-                          {value}
-                        </button>
-                      );
-                    },
-                  )}
-                </div>
-              ) : (
-                <div
-                  className="touch-pan-y select-none overflow-x-hidden"
-                  onPointerDown={(event) => {
-                    if (!event.isPrimary || event.button !== 0) return;
-                    suppressDateClickRef.current = false;
-                    swipeRef.current = {
-                      pointerId: event.pointerId,
-                      x: event.clientX,
-                      y: event.clientY,
-                      horizontal: false,
-                      moved: false,
-                    };
-                  }}
-                  onPointerMove={(event) => {
-                    const swipe = swipeRef.current;
-                    if (!swipe || swipe.pointerId !== event.pointerId) return;
-                    const x = Math.abs(event.clientX - swipe.x);
-                    const y = Math.abs(event.clientY - swipe.y);
-                    if (x > 8 || y > 8) swipe.moved = true;
-                    if (!swipe.horizontal && x > 8 && x > y * 1.2) {
-                      swipe.horizontal = true;
-                      event.currentTarget.setPointerCapture(event.pointerId);
-                    }
-                  }}
-                  onPointerUp={(event) => {
-                    const swipe = swipeRef.current;
-                    if (!swipe || swipe.pointerId !== event.pointerId) return;
-                    swipeRef.current = null;
-                    suppressDateClickRef.current = swipe.moved;
-                    const x = event.clientX - swipe.x;
-                    const y = event.clientY - swipe.y;
-                    if (swipe.horizontal && Math.abs(x) >= 48 && Math.abs(x) > Math.abs(y) * 1.2) {
-                      changeMonth(x > 0 ? 1 : -1);
-                    }
-                  }}
-                  onPointerCancel={() => {
-                    swipeRef.current = null;
-                    suppressDateClickRef.current = true;
-                  }}
-                  onLostPointerCapture={() => {
-                    swipeRef.current = null;
-                  }}
-                  onClickCapture={(event) => {
-                    if (suppressDateClickRef.current && event.detail > 0) {
-                      event.preventDefault();
-                      event.stopPropagation();
-                    }
-                  }}
-                >
-                  <DaysOfTheWeek />
-                  <div className="relative mt-2 grid overflow-hidden">
-                    <AnimatePresence initial={false} custom={direction}>
-                      <motion.div
-                        key={`${year}-${month}`}
-                        custom={direction}
-                        variants={{
-                          enter: (value: number) => ({
-                            x: reduceMotion ? 0 : value * 60,
-                            opacity: 0,
-                          }),
-                          center: { x: 0, opacity: 1, pointerEvents: "auto" },
-                          exit: (value: number) => ({
-                            x: reduceMotion ? 0 : value * -60,
-                            opacity: 0,
-                            pointerEvents: "none",
-                          }),
-                        }}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{ duration: reduceMotion ? 0 : 0.22, ease: "easeOut" }}
-                        className="col-start-1 row-start-1"
-                      >
-                        <DayPicker
-                          year={year}
-                          month={month}
-                          selectedDate={selectedDay}
-                          minimum={minimum}
-                          maximum={maximum}
-                          onSelect={selectDay}
-                        />
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
+              </div>
+            )}
+          </AnimatedSwap>
         </div>
         <button
+          title={text.submit}
+          {...submitButtonProps}
           type="button"
-          disabled={!hasDates || view !== "days"}
+          disabled={disabled || !hasDates || view !== "days"}
           onClick={submitDate}
-          className="flex h-10 w-full items-center justify-center rounded-md bg-primary-500 text-white disabled:opacity-40"
+          className={`mpd-submit-button flex h-10 w-full items-center justify-center rounded-md disabled:opacity-40 ${submitButtonProps?.className ?? ""}`}
         >
-          ثبت
+          {text.submit}
         </button>
       </div>
     </div>

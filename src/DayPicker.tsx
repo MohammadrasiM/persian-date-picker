@@ -10,6 +10,8 @@ type Props = {
   minimum: moment.Moment;
   maximum: moment.Moment;
   onSelect: (value: string) => void;
+  disabled: boolean;
+  dayLabel: (day: number) => string;
 };
 
 export default function DayPicker({
@@ -19,6 +21,8 @@ export default function DayPicker({
   minimum,
   maximum,
   onSelect,
+  disabled,
+  dayLabel,
 }: Props) {
   const first = date(`${year}/${month + 1}/1`, "jYYYY/jM/jD");
   const offset = (first.day() + 1) % 7;
@@ -36,9 +40,10 @@ export default function DayPicker({
           <Day
             key={index}
             day={day}
+            label={dayLabel(day)}
             today={value.isSame(today, "day")}
             selected={value.isSame(selected, "day")}
-            disabled={value.isBefore(minimum, "day") || value.isAfter(maximum, "day")}
+            disabled={disabled || value.isBefore(minimum, "day") || value.isAfter(maximum, "day")}
             onSelect={() => onSelect(value.format("jYYYY/jMM/jD"))}
           />
         );

@@ -1,3 +1,30 @@
+import type { ButtonHTMLAttributes, HTMLAttributes } from "react";
+
+type DataAttributes = { [key: `data-${string}`]: string | number | boolean | undefined };
+
+export type DatePickerButtonProps = Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "children" | "dangerouslySetInnerHTML" | "onClick" | "type" | "disabled"
+> & DataAttributes;
+
+export type DatePickerContainerProps = Omit<
+  HTMLAttributes<HTMLDivElement>,
+  "children" | "dangerouslySetInnerHTML" | "dir"
+> & DataAttributes;
+
+export type DatePickerLabels = {
+  submit?: string;
+  previousMonth?: string;
+  nextMonth?: string;
+  month?: string;
+  year?: string;
+  chooseMonth?: string;
+  chooseYear?: string;
+  close?: string;
+  emptyRange?: string;
+  day?: (day: number) => string;
+};
+
 export type DatePickerSelectedDate = {
   day: number | string;
   month: number | string;
@@ -12,6 +39,13 @@ export type DatePickerProps = {
   maxYear?: number;
   pastYears?: number;
   nextYears?: number;
+  primaryColor?: string;
+  buttonColor?: string;
+  buttonTextColor?: string;
+  submitButtonProps?: DatePickerButtonProps;
+  containerProps?: DatePickerContainerProps;
+  labels?: DatePickerLabels;
+  disabled?: boolean;
   onSubmit: () => void;
 };
 
@@ -21,8 +55,10 @@ export type DatePickerModalProps = Omit<DatePickerProps, "onSubmit"> & {
   onSubmit?: () => void;
   afterLeave?: () => void;
   title?: string;
+  closeButtonProps?: DatePickerButtonProps;
   options?: {
     containerClass?: string;
     parentClass?: string;
+    backdropClass?: string;
   };
 };

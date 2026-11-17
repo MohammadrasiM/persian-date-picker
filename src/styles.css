@@ -27,6 +27,10 @@
 .mpd-datepicker button:disabled {
   cursor: not-allowed;
 }
+.mpd-datepicker .mpd-submit-button {
+  background-color: var(--mpd-button-background, rgb(var(--mpd-primary, 232 59 86)));
+  color: var(--mpd-button-text, #fff);
+}
 .mpd-datepicker p {
   margin: 0;
 }
@@ -43,22 +47,88 @@
   pointer-events: none;
 }
 .mpd-datepicker .mpd-modal-backdrop {
-  opacity: var(--mpd-modal-progress, 0);
+  opacity: 0;
   touch-action: none;
+  transition: opacity 200ms ease-in;
 }
 .mpd-datepicker .mpd-modal-panel {
-  transform: translateY(calc((1 - var(--mpd-modal-progress, 0)) * 100%));
+  transform: translateY(100%);
+  transition: transform 200ms ease-in, opacity 200ms ease-in;
+}
+.mpd-datepicker.mpd-modal[data-state="open"] .mpd-modal-backdrop {
+  opacity: 1;
+  transition-duration: 300ms;
+  transition-timing-function: ease-out;
+}
+.mpd-datepicker.mpd-modal[data-state="open"] .mpd-modal-panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition-duration: 300ms;
+  transition-timing-function: ease-out;
+}
+.mpd-datepicker .mpd-swap[data-phase="exit"] {
+  pointer-events: none;
+}
+.mpd-datepicker .mpd-swap[data-animation="month"][data-phase="enter"] {
+  animation: mpd-month-enter 220ms ease-out both;
+}
+.mpd-datepicker .mpd-swap[data-animation="month"][data-phase="exit"] {
+  animation: mpd-month-exit 220ms ease-out both;
+}
+.mpd-datepicker .mpd-swap[data-animation="view"] {
+  --mpd-view-y: -24px;
+  --mpd-view-clip: 100%;
+}
+.mpd-datepicker .mpd-swap[data-animation="view"][data-view="days"] {
+  --mpd-view-y: 0px;
+  --mpd-view-clip: 0%;
+}
+.mpd-datepicker .mpd-swap[data-animation="view"][data-phase="enter"] {
+  animation: mpd-view-enter 220ms ease-out both;
+}
+.mpd-datepicker .mpd-swap[data-animation="view"][data-phase="exit"] {
+  animation: mpd-view-exit 220ms ease-out both;
+}
+@keyframes mpd-month-enter {
+  from { opacity: 0; transform: translateX(var(--mpd-slide)); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes mpd-month-exit {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(calc(-1 * var(--mpd-slide))); }
+}
+@keyframes mpd-view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--mpd-view-y));
+    clip-path: inset(0 0 var(--mpd-view-clip) 0);
+  }
+  to { opacity: 1; transform: translateY(0); clip-path: inset(0 0 0% 0); }
+}
+@keyframes mpd-view-exit {
+  from { opacity: 1; transform: translateY(0); clip-path: inset(0 0 0% 0); }
+  to {
+    opacity: 0;
+    transform: translateY(var(--mpd-view-y));
+    clip-path: inset(0 0 var(--mpd-view-clip) 0);
+  }
 }
 @media (min-width: 768px) {
   .mpd-datepicker .mpd-modal-panel {
-    transform: translateY(calc((1 - var(--mpd-modal-progress, 0)) * 1rem))
-      scale(calc(0.95 + var(--mpd-modal-progress, 0) * 0.05));
-    opacity: var(--mpd-modal-progress, 0);
+    transform: translateY(1rem) scale(0.95);
+    opacity: 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mpd-datepicker .mpd-modal-panel {
+  .mpd-datepicker.mpd-modal[data-state] .mpd-modal-backdrop,
+  .mpd-datepicker.mpd-modal[data-state] .mpd-modal-panel {
+    transition-duration: 0ms;
+  }
+  .mpd-datepicker.mpd-modal[data-state] .mpd-modal-panel {
     transform: none;
+  }
+  .mpd-datepicker .mpd-swap[data-animation][data-phase] {
+    animation: none;
   }
 }
 @tailwind utilities;

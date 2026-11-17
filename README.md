@@ -143,6 +143,8 @@ props below. Its `onSubmit` callback is optional. `DatePickerModalProps` is also
 | `title` | `string` | No | Dialog heading and accessible name. Default: `انتخاب تاریخ`. |
 | `options.containerClass` | `string` | No | Additional classes for the padded dialog panel, such as a theme class. |
 | `options.parentClass` | `string` | No | Replaces the default positioning wrapper classes for custom layouts. |
+| `options.backdropClass` | `string` | No | Additional classes for the backdrop. |
+| `closeButtonProps` | `DatePickerButtonProps` | No | Classes, styles, title, ID, and native attributes for the close button. |
 
 The dialog manages keyboard focus, restores focus to the opening control, and
 respects reduced-motion preferences. The existing stylesheet includes its styles;
@@ -160,6 +162,13 @@ you do not need to install or configure a separate UI library.
 | `maxYear` | `number` | No | Last allowed Jalali year. Defaults to the current Jalali year plus `nextYears`. |
 | `pastYears` | `number` | No | Years before the current year when `minYear` is omitted. Default: `100`. |
 | `nextYears` | `number` | No | Years after the current year when `maxYear` is omitted. Default: `5`. |
+| `primaryColor` | `string` | No | Calendar accent and default submit background, as `#RGB` or `#RRGGBB`. |
+| `buttonColor` | `string` | No | Submit-button background as a CSS color. Defaults to the primary color. |
+| `buttonTextColor` | `string` | No | Submit-button text as a CSS color. Default: white. |
+| `submitButtonProps` | `DatePickerButtonProps` | No | Submit-button classes, styles, title, ID, and native attributes. |
+| `containerProps` | `DatePickerContainerProps` | No | Calendar container classes, styles, ID, and native attributes. |
+| `labels` | `DatePickerLabels` | No | Override button text, tooltips, accessible labels, and empty-range text. |
+| `disabled` | `boolean` | No | Disables calendar controls and confirmation. Modal dismissal remains available. Default: `false`. |
 
 ### Date format
 
@@ -211,6 +220,79 @@ it are disabled. When combined with `minYear`, the later lower bound applies.
 The picker fills its container's width and inherits its font family. Set a width
 on a wrapper and use your preferred Persian font in your app.
 
+### Colors, classes, and button text
+
+Both picker variants accept the same customization props:
+
+```tsx
+<DatePicker
+  selectedDate={selectedDate}
+  setSelectedDate={setSelectedDate}
+  onSubmit={() => setIsOpen(false)}
+  primaryColor="#004f98"
+  buttonColor="#00695c"
+  buttonTextColor="#ffffff"
+  labels={{ submit: "تأیید تاریخ" }}
+  submitButtonProps={{
+    className: "booking-submit",
+    title: "ذخیره تاریخ رزرو",
+    "data-testid": "confirm-date",
+    style: { borderRadius: 24 },
+  }}
+  containerProps={{ id: "booking-calendar", className: "booking-calendar" }}
+/>
+```
+
+`primaryColor` accepts three- or six-digit hex colors. Invalid values are ignored,
+preserving the inherited theme or default accent. `buttonColor` and
+`buttonTextColor` accept CSS colors such as hex, `rgb(...)`, or `var(--brand-color)`.
+Colors apply independently to each picker, including the modal portal.
+
+The button prop bags support `className`, `style`, `title`, `id`, `aria-*`, and
+`data-*` attributes. The picker owns `onClick`, `type`, `disabled`, and button
+contents to preserve selection and dismissal behavior. Use `labels.submit` to
+change the visible confirmation text. `containerProps` targets the calendar
+itself, including inside a modal; its RTL direction is preserved.
+
+Import your custom stylesheet after the package stylesheet. Match the package's
+selector specificity when overriding default button utilities:
+
+```css
+.mpd-datepicker .booking-submit {
+  min-height: 48px;
+  border-radius: 24px;
+  font-weight: 700;
+}
+```
+
+Inline `style` values override the default styles directly. Class names are
+appended; conflicting Tailwind utilities are not automatically merged.
+
+### Labels and tooltips
+
+Pass only the labels you want to change. Others keep their Persian defaults.
+Navigation, selector, day, and close labels also set native button tooltips.
+You can override the submit and close tooltips through their button prop bags.
+
+| Label | Default | Applies to |
+| --- | --- | --- |
+| `submit` | `ثبت` | Visible submit text and tooltip. |
+| `previousMonth` | `ماه قبل` | Previous-month button. |
+| `nextMonth` | `ماه بعد` | Next-month button. |
+| `month` | `ماه` | Month selector button. |
+| `year` | `سال` | Year selector button. |
+| `chooseMonth` | `انتخاب ماه` | Month choices container. |
+| `chooseYear` | `انتخاب سال` | Year choices container. |
+| `day` | `(day) => "روز " + day` | Day-button label and tooltip; receives the day number. |
+| `close` | `بستن` | Modal close button. |
+| `emptyRange` | `تاریخی در بازه انتخابی وجود ندارد.` | Empty-range message. |
+
+These labels do not replace Persian month names or weekday headings.
+`DatePickerLabels`, `DatePickerButtonProps`, and `DatePickerContainerProps` are
+exported for typed configurations.
+
+### CSS variable themes
+
 To change the colors, add `className="calendar-theme"` to the wrapper in the
 quick-start example and define these CSS variables in your app's stylesheet:
 
@@ -221,11 +303,16 @@ quick-start example and define these CSS variables in your app's stylesheet:
   --mpd-border: 219 221 220;
   --mpd-background: 255 255 255;
   --mpd-error: 229 59 86;
+  --mpd-button-background: #00695c;
+  --mpd-button-text: #fff;
 }
 ```
 
-Use **space-separated RGB channels**, such as `0 79 152`. Each variable is
-optional; omitted variables use the default colors.
+Use **space-separated RGB channels**, such as `0 79 152`, for the calendar
+variables. `--mpd-button-background` and `--mpd-button-text` use complete CSS
+colors. Each variable is optional. The submit background inherits the primary
+color when its variable is omitted; other omitted variables use their defaults.
+Color props set variables on the picker and take precedence over inherited themes.
 
 For the modal, pass your theme class to the panel:
 
